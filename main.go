@@ -1,29 +1,48 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
+
+	"commands"
 	"log"
 	"net/http"
+	"qrcode"
 
-	"github.com/gorilla/mux"
-	"commands"
+	"fmt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	"net"
 )
+
+const (
+	gRPCPort   = ":8086"
+	routerPort = ":8085"
+)
+
+func gRPCServer() {
+	listen, err := net.Listen("tcp", gRPCPort)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	server := grpc.NewServer()
+	commands.RegisterGreeterServer(server, &commands.Command{})
+
+	// Register reflection service on gRPC server.
+	reflection.Register(server)
+
+	fmt.Println("Running gRPC Server")
+	if err := server.Serve(listen); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
 
 func main() {
 	router := mux.NewRouter()
+	router.HandleFunc("/qrcode", qrcode.QRCode)
 
-	router.HandleFunc("/keyboard/space", commands.SpaceCommandEndPoint).Methods("POST")
-	router.HandleFunc("/keyboard/enter", commands.EnterCommandEndPoint).Methods("POST")
-	router.HandleFunc("/keyboard/left", commands.LeftCommandEndPoint).Methods("POST")
-	router.HandleFunc("/keyboard/right", commands.RightCommandEndPoint).Methods("POST")
-	router.HandleFunc("/keyboard/up", commands.UpCommandEndPoint).Methods("POST")
-	router.HandleFunc("/keyboard/down", commands.DownCommandEndPoint).Methods("POST")
-	router.HandleFunc("/keyboard/text/{input}", commands.KeyboardCommandEndPoint).Methods("POST")
+	go gRPCServer()
 
-	router.HandleFunc("/audio/lower", commands.LowerAudioCommandEndPoint).Methods("POST")
-	router.HandleFunc("/audio/increase", commands.IncreaseAudioCommandEndPoint).Methods("POST")
-
-	router.HandleFunc("/mouse/click", commands.ClickCommandEndPoint).Methods("POST")
-	router.HandleFunc("/mouse/{x}/{y}", commands.MouseCommandEndPoint).Methods("POST")
-
-	log.Fatal(http.ListenAndServe(":8080", router))
+	fmt.Println("Running Server")
+	log.Fatal(http.ListenAndServe(routerPort, router))
 }

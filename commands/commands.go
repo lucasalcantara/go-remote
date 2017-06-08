@@ -1,71 +1,88 @@
 package commands
 
 import (
-	"net/http"
-	"github.com/gorilla/mux"
-	"strconv"
 	"github.com/go-vgo/robotgo"
+
+	"golang.org/x/net/context"
+	"strconv"
 )
 
 const speed = 8
 
-func MouseCommandEndPoint(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	moveX, err := strconv.Atoi(params["x"])
+type Command struct{}
+
+func (Command) MouseCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
+	mouseX, mouseY := robotgo.GetMousePos()
+
+	moveX, err := strconv.Atoi(command.Params[0])
 	if err != nil {
-		return
+		return &CommandReply{Status: "404"}, nil
 	}
 
-	moveY, err := strconv.Atoi(params["y"])
+	moveY, err := strconv.Atoi(command.Params[1])
 	if err != nil {
-		return
+		return &CommandReply{Status: "404"}, nil
 	}
 
-	x, y := robotgo.GetMousePos()
-	robotgo.MoveMouse(x+moveX*speed, y+moveY*speed)
+	sumX := mouseX + (moveX * speed)
+	sumY := mouseY + (moveY * speed)
+
+	robotgo.MoveMouse(sumX, sumY)
+
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func ClickCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) ClickCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.MouseClick()
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func KeyboardCommandEndPoint(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	for _, input := range params {
+func (Command) KeyboardCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
+	for _, input := range command.Params {
 		for _, letter := range input {
 			robotgo.KeyTap(string(letter))
 		}
 	}
+
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func SpaceCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) SpaceCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("escape")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func EnterCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) EnterCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("enter")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func LeftCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) LeftCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("left")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func RightCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) RightCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("right")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func LowerAudioCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) LowerAudioCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("audio_vol_down")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func UpCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) UpCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("up")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func DownCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) DownCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("down")
+	return &CommandReply{Status: "OK"}, nil
 }
 
-func IncreaseAudioCommandEndPoint(w http.ResponseWriter, req *http.Request) {
+func (Command) IncreaseAudioCommandEndPoint(ctx context.Context, command *CommandRequest) (*CommandReply, error) {
 	robotgo.KeyTap("audio_vol_up")
+	return &CommandReply{Status: "OK"}, nil
 }
